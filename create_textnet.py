@@ -153,7 +153,8 @@ def create_similarity_nx(data, id_col, model, threshold):
             futures.append(executor.submit(add_edges, G, data, i, similarity_matrix, threshold, id_col))
 
     # Collect results and add edges to the graph
-    for future in futures
+    for future in futures:
+        edges = future.result()
         G.add_edges_from(edges)
 
     return G
