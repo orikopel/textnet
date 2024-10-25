@@ -223,7 +223,7 @@ def G_to_net(G, id_col, title_col, text_col, data, stop_words):
             "nodes": {
                 "font": {
                     "size": 16,
-                    "color": "white",
+                    "color": "black",
                     "face": "Arial"
                 },
                 "borderWidth": 1,
@@ -249,7 +249,7 @@ def G_to_net(G, id_col, title_col, text_col, data, stop_words):
             }
         }
     """)
-    net.background_color = "#222222"  # Dark background
+    #net.background_color = "#222222"  # Dark background
 
     # Show the network
     return net
