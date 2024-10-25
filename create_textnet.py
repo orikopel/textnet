@@ -2,7 +2,6 @@
 import re
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 from collections import Counter
 
 # for graphs
@@ -19,9 +18,6 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from sentence_transformers import SentenceTransformer
-
-# configure tqdm with pandas
-tqdm.pandas()
 
 #------------------------------------------------------------------------------
 # Helper Functions #
@@ -109,7 +105,7 @@ def generate_embeddings(df, text_col, model, batch_size=32, num_threads=4):
     with ThreadPoolExecutor(max_workers=num_threads) as executor:
         futures = [executor.submit(batch_encode, split, model, batch_size) for split in splits]
 
-        for future in tqdm(as_completed(futures), total=len(futures), desc="Generating embeddings in parallel"):
+        for future in as_completed(futures):
             embeddings.extend(future.result())
 
     # Convert list of embeddings to a NumPy array and add to dataframe
@@ -153,12 +149,11 @@ def create_similarity_nx(data, id_col, model, threshold):
     # Use ThreadPoolExecutor for multithreading
     with ThreadPoolExecutor() as executor:
         futures = []
-        for i in tqdm(range(len(data)), desc="Finding edges"):
+        for i in range(len(data)):
             futures.append(executor.submit(add_edges, G, data, i, similarity_matrix, threshold, id_col))
 
     # Collect results and add edges to the graph
-    for future in tqdm(futures, desc="Adding edges to graph"):
-        edges = future.result()
+    for future in futures
         G.add_edges_from(edges)
 
     return G
@@ -186,7 +181,7 @@ def G_to_net(G, id_col, title_col, text_col, data, stop_words):
     net = Network(notebook=True)
 
     # add nodes to pyvis
-    for idx, community in tqdm(enumerate(communities), desc="Building pyvis graph by communities - nodes"):
+    for idx, community in enumerate(communities):
 
         # Get titles for this community
         texts = [data.loc[data[id_col] == node, title_col].values[0] for node in community]
@@ -214,7 +209,7 @@ def G_to_net(G, id_col, title_col, text_col, data, stop_words):
             net.add_edge(community_node_id, node, color='rgba(0, 0, 0, 0)', value=0)  # Invisible edges for connection
 
     # add edges to pyvis
-    for u, v, val in tqdm(G.edges(data=True), desc="Building pyvis graph by communities - edges"):
+    for u, v, val in G.edges(data=True):
         net.add_edge(u, v, value=val['score'] * 10, label=val['score'])  # Scale scores for edge visibility
 
     # Set dark mode options
