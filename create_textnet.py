@@ -1,7 +1,9 @@
 # basic libs
+import re
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+from collections import Counter
 
 # for graphs
 import networkx as nx
@@ -13,13 +15,51 @@ from networkx.algorithms.community import girvan_newman
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # for NLP
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
 from sentence_transformers import SentenceTransformer
-
-# inner modules
-from helper_funcs import extract_common_keywords, validate_data
 
 # configure tqdm with pandas
 tqdm.pandas()
+
+#------------------------------------------------------------------------------
+# Helper Functions #
+
+def extract_common_keywords(titles, stop_words):
+    """
+    Extracts the most common non-stopword keywords from a list of titles.
+    Args:
+        titles (List[str]): List of titles to extract keywords from.
+    Returns:
+        common_keywords (str): The most common keyword(s) or subject(s).
+    """
+    # Tokenize words and remove stopwords
+    words = [word.lower() for title in titles for word in word_tokenize(title, language="english") if word.isalnum()]
+    words = [word for word in words if word not in stop_words]
+
+    # Get the most common words
+    most_common_words = Counter(words).most_common(3)  # Top 3 common words
+    return ', '.join([word[0] for word in most_common_words])  # Return top words as a string
+
+def validate_data(df, id_col, title_col, text_col):
+    """
+    Validates the input data.
+    """
+
+    # filter out rows without texts
+    df = df[df[text_col].apply(lambda x: isinstance(x, str) and len(x) > 0)]
+
+    # get rid of non-letter chars
+    df[text_col] = df[text_col].apply(lambda x: re.sub(r'[^a-zA-Z\s]', '', x) if isinstance(x, str) else x)
+
+    # drop duplicates by id
+    df = df.dropna(subset=[id_col])
+
+    # convert ids to string if needed
+    df[id_col] = df[id_col].astype(str)
+
+    return df
 
 #------------------------------------------------------------------------------
 # Embedding the Input Texts #
@@ -86,7 +126,7 @@ def add_edges(G, data, i, similarity_matrix, threshold, id_col):
     for j in range(i + 1, len(data)):
         score = similarity_matrix[i, j]
         if score > threshold:
-            edges.append((data.iloc[i][id_col], data.iloc[j][id_col], float(score)))
+            edges.append((data.iloc[i][id_col], data.iloc[j][id_col], {"score": float(score)}))
     return edges
 
 def create_similarity_nx(data, id_col, model, threshold):
@@ -123,7 +163,7 @@ def create_similarity_nx(data, id_col, model, threshold):
 
     return G
 
-def G_to_net(G, id_col, title_col, text_col, data):
+def G_to_net(G, id_col, title_col, text_col, data, stop_words):
     """
     Creates a Pyvis network from a graph data structure.
 
@@ -149,12 +189,11 @@ def G_to_net(G, id_col, title_col, text_col, data):
     for idx, community in tqdm(enumerate(communities), desc="Building pyvis graph by communities - nodes"):
 
         # Get titles for this community
-        titles = [data.loc[data[id_col] == node, title_col].values[0] for node in community]
         texts = [data.loc[data[id_col] == node, title_col].values[0] for node in community]
 
         # Create a community label (e.g., most common title)
         community_node_id = f'community_{idx}'
-        community_title = community_node_id + " - " + extract_common_keywords(texts)
+        community_title = community_node_id + " - " + extract_common_keywords(texts, stop_words)
 
         # Add a community node (outer circle)
         net.add_node(community_node_id, label=community_title, title=community_title,
@@ -178,65 +217,60 @@ def G_to_net(G, id_col, title_col, text_col, data):
     for u, v, val in tqdm(G.edges(data=True), desc="Building pyvis graph by communities - edges"):
         net.add_edge(u, v, value=val['score'] * 10, label=val['score'])  # Scale scores for edge visibility
 
+    # Set dark mode options
     net.set_options("""
         var options = {
-        "nodes": {
-            "font": {
-            "size": 14
+            "nodes": {
+                "font": {
+                    "size": 16,
+                    "color": "white",
+                    "face": "Arial"
+                },
+                "borderWidth": 1,
+                "borderWidthSelected": 2
+            },
+            "edges": {
+                "color": {
+                    "inherit": true
+                },
+                "smooth": {
+                    "type": "continuous"
+                }
+            },
+            "interaction": {
+                "hover": true,
+                "tooltipDelay": 100
+            },
+            "physics": {
+                "enabled": true
+            },
+            "layout": {
+                "improvedLayout": true
             }
-        },
-        "edges": {
-            "smooth": {
-            "type": "continuous"
-            }
-        },
-        "physics": {
-            "enabled": true
         }
-        }
-        """)
+    """)
+    net.background_color = "#222222"  # Dark background
 
     # Show the network
     return net
 
 #------------------------------------------------------------------------------
-# Displaying the Graph as HTML Page #
-
-def create_with_header(save_path, net, html_header_path):
-    """
-    Creates an html page with a header and a network visualization.
-
-    Args:
-        save_path(String): path to save the html page.
-        net(Network): Pyvis network.
-        html_header(String): html header.
-    """
-
-    with open(html_header_path, "r", encoding="utf-8") as file:
-        html_header = file.read()
-
-    # Combine the header with the network output
-    with open(save_path, "w") as f:
-        f.write(html_header)
-        f.write(net.generate_html())  # Include the network visualization
-        f.write("</body></html>")  # Close the HTML tags
-
-#------------------------------------------------------------------------------
 # Running the whole process #
 
-def df2net(data_path, save_path, id_col, title_col, text_col, html_header_path, threshold, lang):
+def df2net(df, id_col, title_col, text_col, threshold, lang):
     """
     Creates a network visualization from a dataframe. Combines all above functions.
 
     Args:
-        data_path(String): path to the dataframe.
-        save_path(String): path to save the html page.
+        df(DataFrame): the user's data.
         id_col(String): column name of the unique identifier.
         title_col(String): column name of the title.
         text_col(String): column name of the text.
-        html_header(String): header of the html page.
-        lang(String): language of the text. Used for choosing the right model.
         threshold(Float): threshold for the edge score.
+        lang(String): language of the text. Used for choosing the right model.
+
+    Returns:
+        net(Pyvis): a pyvis network graph. 
     """
 
     # dict for choosing a model for each optional language
@@ -244,24 +278,19 @@ def df2net(data_path, save_path, id_col, title_col, text_col, html_header_path, 
 
     # choose the right model for user input language
     model = SentenceTransformer(language_models[lang])
-    print(f"1 - Selected model: {language_models[lang]}")
 
     # read the dataset and create embedding column
-    data = pd.read_csv(data_path, encoding='latin1').head(500)
-    data = validate_data(data, id_col, title_col, text_col)
+    data = validate_data(df, id_col, title_col, text_col)
     data = generate_embeddings(data, text_col, model)
-    print("2 - Created embeddings for the data")
 
     # create a graph data structure with text similarity as edge score
     G = create_similarity_nx(data, id_col, model, threshold)
-    print("3 - Created graph data structure with text similarity as edge score")
 
     # convert the nx graph to a net graph
-    net = G_to_net(G, id_col, title_col, text_col, data)
-    print("4 - Created pyvis network")
+    nltk.download('punkt')
+    nltk.download('punkt_tab')
+    nltk.download('stopwords')
+    stop_words = set(stopwords.words('english'))
+    net = G_to_net(G, id_col, title_col, text_col, data, stop_words)
 
-    # save the graph as an html page
-    create_with_header(save_path, net, html_header_path)
-    print("5 - Saved the graph as an html page")
-
-df2net("McDonald_s_Reviews.csv", "mcdonalds.html", "reviewer_id", "review", "review", "header.html", 0.7, "eng")
+    return net
