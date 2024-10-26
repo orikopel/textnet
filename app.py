@@ -25,6 +25,17 @@ if uploaded_file:
     title_col = st.selectbox("Select the Title column", df.columns)
     text_col = st.selectbox("Select the Text column", df.columns)
 
+    # optional filtering for specific content
+    apply_filter = st.checkbox("Filter by specific words")
+    filter_col_options = list(set([title_col, text_col]))
+    if apply_filter:
+        column_to_filter = st.selectbox("Select column to filter", filter_col_options)
+        unique_words = df[column_to_filter].dropna().unique()
+        words_input = st.text_input("Enter words to filter by (comma-separated)")
+        if words_input:
+            filter_words = [word.strip() for word in words_input.split(",")]
+            df = df[df[column_to_filter].astype(str).isin(filter_words)]
+
     # Additional parameters
     threshold = st.slider("Select Similarity Threshold", 0.0, 1.0, 0.75)
     lang = st.selectbox("Select Language Model", ["eng", "heb"])
