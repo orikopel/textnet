@@ -15,6 +15,9 @@ A Streamlit application that calculates the similarity between texts in a given 
 
 This app allows users to upload a CSV or Excel file containing a column of text data. The application computes the similarity between each pair of texts using a chosen similarity metric and generates a network graph representing the relationships among similar texts. This can be particularly useful for tasks such as clustering, text analysis, and data exploration.
 
+![image](https://github.com/user-attachments/assets/9fe220bd-26e1-4fc8-8de2-7844df204526)
+
+
 ## Installation
 
 To run this project locally, follow these steps:
