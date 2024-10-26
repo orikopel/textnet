@@ -36,7 +36,8 @@ if uploaded_file:
         words_input = st.text_input("Enter words to filter by (comma-separated)")
         if words_input:
             filter_words = [word.strip() for word in words_input.split(",")]
-            df = df[df[column_to_filter].astype(str).isin(filter_words)]
+            pattern = '|'.join(filter_words)  # Regex OR for each word
+            filtered_df = df[df[column_to_filter].astype(str).str.contains(pattern, case=False, na=False)]
             if df.empty:
                 st.error("No rows match the filter criteria. Please try different words.")
 
