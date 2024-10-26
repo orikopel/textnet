@@ -32,12 +32,12 @@ if uploaded_file:
     apply_filter = st.checkbox("Filter by specific words")
     filter_col_options = list(set([title_col, text_col]))
     if apply_filter:
-        column_to_filter = st.multiselect("Select column to filter", filter_col_options)
+        columns_to_filter = st.multiselect("Select column to filter", filter_col_options)
         words_input = st.text_input("Enter words to filter by (comma-separated)")
         if words_input:
             filter_words = [word.strip() for word in words_input.split(",")]
             pattern = '|'.join(filter_words)  # Regex OR for each word
-            filtered_df = df[df[column_to_filter].astype(str).str.contains(pattern, case=False, na=False)]
+            filtered_df = df[df[[columns_to_filter]].astype(str).str.contains(pattern, case=False, na=False)]
             if df.empty:
                 st.error("No rows match the filter criteria. Please try different words.")
 
