@@ -35,9 +35,10 @@ To run this project locally, follow these steps:
    streamlit run app.py
 2. Open your web browser and go to http://localhost:8501.
 3. Upload your CSV or Excel file. Ensure that the file has a column with text data.
-4. Select the similarity metric you wish to use (e.g., Cosine Similarity, Jaccard Similarity).
-5. Click the "Calculate Similarity" button to process the data and generate the network graph.
-6. Explore the network graph to identify similar texts and their relationships.
+4. Provide inputs such as the name of the text column and the similarity threshold.
+5. Optional - filter your data by a list of keywords.
+7. Click the "Generate Graph" button to process the data and generate the network graph.
+8. Explore the network graph to identify similar texts and their relationships.
 
 ## Features
 
