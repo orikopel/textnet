@@ -6,8 +6,8 @@ from create_textnet import *
 
 
 st.title("Network Graph of Text Similarity")
-st.text("A tool for visualizing similarity between texts as a network graph for you to analyze.")
-st.text("The program uses language models in multiple languages for your choice and visualizes connections where the similarity is above the user defined threshold.")
+st.markdown("A tool for visualizing similarity between texts as a network graph for you to analyze.")
+st.markdown("The program uses language models in multiple languages for your choice and visualizes connections where the similarity is above the user defined threshold.")
 
 # File upload option
 uploaded_file = st.file_uploader("Upload a CSV or Excel file", type=["csv", "xlsx"])
