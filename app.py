@@ -30,7 +30,6 @@ if uploaded_file:
     filter_col_options = list(set([title_col, text_col]))
     if apply_filter:
         column_to_filter = st.multiselect("Select column to filter", filter_col_options)
-        unique_words = df[column_to_filter].dropna().unique()
         words_input = st.text_input("Enter words to filter by (comma-separated)")
         if words_input:
             filter_words = [word.strip() for word in words_input.split(",")]
