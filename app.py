@@ -38,7 +38,7 @@ if uploaded_file:
             filter_words = [word.strip() for word in words_input.split(",")]
             pattern = '|'.join(filter_words)  # Regex OR for each word
             mask = df[columns_to_filter].apply(lambda col: col.astype(str).str.contains(pattern, case=False, na=False))
-            filtered_df = df[mask.any(axis=1)]
+            df = df[mask.any(axis=1)]
             if df.empty:
                 st.error("No rows match the filter criteria. Please try different words.")
 
