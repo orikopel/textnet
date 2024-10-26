@@ -20,6 +20,9 @@ if uploaded_file:
     else:
         df = pd.read_excel(uploaded_file, encoding='latin1')
 
+    if df.empty:
+        st.error("Uploaded file does not contain any data, please provide a different file")
+
     # Column selection for id, title, and text
     id_col = st.selectbox("Select the ID column", df.columns)
     title_col = st.selectbox("Select the Title column", df.columns)
@@ -34,6 +37,8 @@ if uploaded_file:
         if words_input:
             filter_words = [word.strip() for word in words_input.split(",")]
             df = df[df[column_to_filter].astype(str).isin(filter_words)]
+            if df.empty:
+                st.error("No rows match the filter criteria. Please try different words.")
 
     # Additional parameters
     threshold = st.slider("Select Similarity Threshold", 0.0, 1.0, 0.75)
