@@ -4,7 +4,6 @@ import streamlit as st
 from create_textnet import *
 
 
-
 st.title("Network Graph of Text Similarity")
 st.markdown("A tool for visualizing similarity between texts as a network graph for you to analyze.")
 st.markdown("The program uses language models in multiple languages for your choice and visualizes connections where the similarity is above the user defined threshold.")
@@ -60,6 +59,8 @@ if uploaded_file:
         st.components.v1.html(open(tmp_html_path).read(), height=800, width=800)
 
 
-
+st.write("---")
+st.write("© 2024 Ori Kopolovich. All rights reserved.")
+st.write("License: Use for personal or internal business purposes only. No modifications or redistribution allowed.")
 
 

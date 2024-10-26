@@ -1,0 +1,7 @@
+Proprietary License
+
+Copyright (c) 2024 Ori Kopolovich
+
+1. Permission is granted to use this software for personal or internal business purposes only.
+2. Users may not modify, distribute, or sell this software without explicit permission.
+3. This software is provided "as-is" without warranty of any kind.
